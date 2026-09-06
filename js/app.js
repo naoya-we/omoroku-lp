@@ -19,9 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const videoCtrl = new VideoController();
   const characterRunner = new CharacterRunner();
 
-  // Setup Cinematic Loading Screen & Volumetric Mist Parting System
-  initCinematicLoader();
-
   // Setup GSAP Scroll-driven Section Animations
   initScrollAnimations();
 
@@ -37,220 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup Live FPS meter for cinematic HUD
   initFpsMeter();
 });
-
-/**
- * Cinematic Loading Screen & Volumetric Mist Parting Reveal
- * 1. ページを開いたとき（ロード中）：深い映画の霧に包まれたローディング画面（0% -> 100% プログレス表示・タイムコード）
- * 2. ロード完了後、進むと（スクロール or ボタンクリック）：霧が左右・前方へダイナミックに晴れ渡り、動画とページ全体が現れる
- */
-function initCinematicLoader() {
-  const fogWrapper = document.getElementById('cinematic-fog-wrapper');
-  const loaderContent = document.getElementById('loader-content');
-  const loaderPercent = document.getElementById('loader-percent');
-  const loaderBarFill = document.getElementById('loader-bar-fill');
-  const loaderStatus = document.getElementById('loader-status-text');
-  const loaderTimecode = document.getElementById('loader-timecode');
-  const loaderEnterCta = document.getElementById('loader-enter-cta');
-  const loaderEnterBtn = document.getElementById('loader-enter-btn');
-
-  if (!fogWrapper || !loaderContent) return;
-
-  let progress = 0;
-  let hasEntered = false;
-
-  // Real-time Camera Timecode Simulator for Loader
-  let frame = 0;
-  const timecodeInterval = setInterval(() => {
-    if (hasEntered) {
-      clearInterval(timecodeInterval);
-      return;
-    }
-    frame = (frame + 1) % 60;
-    const sec = Math.floor(frame / 24);
-    const pad = (n) => String(n).padStart(2, '0');
-    if (loaderTimecode) {
-      loaderTimecode.textContent = `00:00:0${sec}:${pad(frame)}`;
-    }
-  }, 40);
-
-  // Smooth Progress Simulation tied to video & window load
-  const updateProgress = (val) => {
-    progress = Math.min(100, Math.max(progress, val));
-    if (loaderPercent) loaderPercent.textContent = `${Math.round(progress)}%`;
-    if (loaderBarFill) loaderBarFill.style.width = `${progress}%`;
-
-    if (progress >= 100) {
-      onLoadComplete();
-    }
-  };
-
-  // Video load event hook
-  const bgVideo = document.getElementById('bg-video');
-  if (bgVideo) {
-    if (bgVideo.readyState >= 3) {
-      updateProgress(80);
-    } else {
-      bgVideo.addEventListener('loadeddata', () => updateProgress(80));
-      bgVideo.addEventListener('canplay', () => updateProgress(95));
-    }
-  }
-
-  // Smoothly increment progress
-  let currentProg = 0;
-  const progressTimer = setInterval(() => {
-    if (currentProg < 88) {
-      currentProg += Math.random() * 14 + 8;
-      updateProgress(currentProg);
-    } else if (document.readyState === 'complete') {
-      currentProg += 12;
-      updateProgress(currentProg);
-    }
-  }, 80);
-
-  // Window load complete hook
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      updateProgress(100);
-    }, 350);
-  });
-
-  // Fallback timer (1.8s maximum) so user is never stuck
-  setTimeout(() => {
-    updateProgress(100);
-  }, 1800);
-
-  // When loading reaches 100%
-  function onLoadComplete() {
-    clearInterval(progressTimer);
-    if (loaderStatus) {
-      loaderStatus.textContent = 'STREAM READY • 4K RAW';
-      loaderStatus.className = 'text-emerald-400 font-bold tracking-wider';
-    }
-    if (loaderEnterCta) {
-      loaderEnterCta.classList.remove('hidden');
-      if (window.lucide) lucide.createIcons();
-    }
-
-    // Auto-enter triggers on scroll down or touchmove
-    window.addEventListener('wheel', handleFirstScroll, { passive: true });
-    window.addEventListener('touchmove', handleFirstScroll, { passive: true });
-    window.addEventListener('scroll', handleFirstScroll, { passive: true });
-  }
-
-  function handleFirstScroll(e) {
-    if (hasEntered) return;
-    if (window.scrollY > 5 || (e && e.deltaY > 0)) {
-      partTheMistAndEnter();
-    }
-  }
-
-  // Click on enter button
-  if (loaderEnterBtn) {
-    loaderEnterBtn.addEventListener('click', () => {
-      partTheMistAndEnter();
-    });
-  }
-
-  // THE REVEAL ANIMATION: 霧の中を進むと霧が晴れてページが現れる
-  function partTheMistAndEnter() {
-    if (hasEntered) return;
-    hasEntered = true;
-
-    window.removeEventListener('wheel', handleFirstScroll);
-    window.removeEventListener('touchmove', handleFirstScroll);
-    window.removeEventListener('scroll', handleFirstScroll);
-
-    if (typeof gsap === 'undefined') {
-      fogWrapper.classList.add('entered');
-      loaderContent.style.display = 'none';
-      return;
-    }
-
-    const revealTl = gsap.timeline({
-      onComplete: () => {
-        fogWrapper.classList.add('entered');
-        if (typeof ScrollTrigger !== 'undefined') {
-          ScrollTrigger.refresh();
-        }
-      }
-    });
-
-    revealTl
-      // 1. Center loader card dissolves & lifts
-      .to(loaderContent, {
-        opacity: 0,
-        scale: 0.92,
-        y: -35,
-        duration: 0.5,
-        ease: 'power2.in'
-      })
-      // 2. Left and right fog banks dramatically sweep away
-      .to('.fog-bank-left', {
-        xPercent: -100,
-        opacity: 0,
-        scale: 1.5,
-        duration: 1.2,
-        ease: 'power3.inOut'
-      }, 0.2)
-      .to('.fog-bank-right', {
-        xPercent: 100,
-        opacity: 0,
-        scale: 1.5,
-        duration: 1.2,
-        ease: 'power3.inOut'
-      }, 0.2)
-      // 3. Foreground wisp plunges past the camera lens and dissolves
-      .to('.fog-foreground-wisp', {
-        scale: 2.6,
-        opacity: 0,
-        filter: 'blur(55px)',
-        duration: 1.1,
-        ease: 'power2.inOut'
-      }, 0.15)
-      // 4. Ambient dark veil lifts to reveal full-bleed video
-      .to(fogWrapper, {
-        backgroundColor: 'rgba(7, 7, 10, 0)',
-        duration: 1.0,
-        ease: 'power2.out'
-      }, 0.3)
-      .to('.fog-layer-ambient', {
-        opacity: 0.15,
-        duration: 1.0,
-        ease: 'power2.out'
-      }, 0.3)
-      .to('.fog-light-shafts', {
-        opacity: 0,
-        duration: 0.8,
-        ease: 'power2.out'
-      }, 0.3)
-      // 5. Main Hero Title & Content burst into view
-      .fromTo('.hero-title-line',
-        { opacity: 0, y: 45, filter: 'blur(16px)' },
-        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.2, stagger: 0.15, ease: 'power3.out' },
-        0.5
-      )
-      .fromTo('.hero-fade-in',
-        { opacity: 0, y: 20, filter: 'blur(6px)' },
-        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, stagger: 0.1, ease: 'power2.out' },
-        0.8
-      );
-  }
-
-  // Also setup continuous ScrollTrigger for scrolling after entering
-  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-    gsap.timeline({
-      scrollTrigger: {
-        trigger: '#hero',
-        start: 'top top',
-        end: 'bottom 20%',
-        scrub: 0.5,
-        invalidateOnRefresh: true
-      }
-    })
-    .to('.fog-layer-ambient', { opacity: 0, ease: 'power1.inOut' }, 0)
-    .to('.fog-enter-prompt', { opacity: 0, y: -25, ease: 'power1.out' }, 0);
-  }
-}
 
 /**
  * GSAP Scroll Animations
@@ -283,6 +66,17 @@ function initScrollAnimations() {
       );
     }
   });
+
+  // Hero Title reveal on page load
+  gsap.fromTo('.hero-title-line',
+    { opacity: 0, y: 60, skewY: 4 },
+    { opacity: 1, y: 0, skewY: 0, duration: 1.4, stagger: 0.2, ease: 'power4.out', delay: 0.2 }
+  );
+
+  gsap.fromTo('.hero-fade-in',
+    { opacity: 0, y: 20 },
+    { opacity: 1, y: 0, duration: 1.0, stagger: 0.15, ease: 'power2.out', delay: 0.6 }
+  );
 }
 
 /**
