@@ -6,28 +6,46 @@
   <title>OMOROKU FILMS | 次世代シネマティック映像制作スタジオ</title>
   <meta name="description" content="スクロールとともに動き出す、映画のようなストーリーテリング。企画・撮影・カラーグレーディング・CGまでワンストップで制作する映像プロダクションOMOROKU FILMS。">
 
-  <!-- Critical Preload: Video Poster Frame for Instant Hero Paint -->
-  <link rel="preload" as="image" href="assets/images/video_poster.jpg" fetchpriority="high">
-
-  <!-- Streamlined Async Google Fonts (swap enabled, non-blocking) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Outfit:wght@600;800;900&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Outfit:wght@600;800;900&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'">
-  <noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Outfit:wght@600;800;900&family=Space+Mono:wght@400;700&display=swap">
-  </noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Outfit:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-  <!-- Compiled Static Tailwind CSS (26KB vs 350KB runtime JIT) -->
-  <link rel="stylesheet" href="css/tailwind.min.css">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cinema: {
+              950: '#07070a',
+              900: '#0e0e15',
+              800: '#161622',
+              gold: '#f59e0b',
+              cyan: '#06b6d4',
+              red: '#ef4444'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans JP"', 'sans-serif'],
+            display: ['"Outfit"', '"Noto Sans JP"', 'sans-serif'],
+            mono: ['"Space Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
 
-  <!-- Custom Cinematic CSS (Minified) -->
-  <link rel="stylesheet" href="css/style.min.css">
+  <!-- Custom Cinematic CSS -->
+  <link rel="stylesheet" href="css/style.css">
 
-  <!-- Deferred External Libraries (Non-render-blocking) -->
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 </head>
 
 <body class="bg-[#07070a] text-gray-100 antialiased relative">
@@ -42,7 +60,7 @@
   <!-- Background Video & Canvas Cinematic Engine (Video is Front & Center) -->
   <div class="video-bg-container">
     <!-- Real Video Source (Responsive: Ultra-light 2.4MB on Mobile / 13MB HD on Desktop) -->
-    <video id="bg-video" class="video-bg-element opacity-95" playsinline muted preload="metadata" poster="assets/images/video_poster.jpg">
+    <video id="bg-video" class="video-bg-element opacity-95" playsinline muted preload="auto">
       <source media="(max-width: 768px)" src="assets/videos/veo_dream_dolly_mobile.mp4" type="video/mp4">
       <source src="assets/videos/veo_dream_dolly.mp4" type="video/mp4">
     </video>
@@ -425,7 +443,7 @@
                data-img="assets/images/work_commercial.jpg"
                data-video="assets/videos/sample-cinematic.mp4">
             <div class="relative aspect-[16/10] overflow-hidden bg-black">
-              <img src="assets/images/work_commercial.jpg" alt="Commercial film" loading="lazy" decoding="async" width="400" height="250" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+              <img src="assets/images/work_commercial.jpg" alt="Commercial film" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
               <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
                 <div class="w-12 h-12 rounded-full bg-cyan-400/90 text-black flex items-center justify-center shadow-lg shadow-cyan-500/50 transform group-hover:scale-110 transition">
                   <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-black"></i>
@@ -448,7 +466,7 @@
                data-img="assets/images/work_mv.jpg"
                data-video="assets/videos/sample-cinematic.mp4">
             <div class="relative aspect-[16/10] overflow-hidden bg-black">
-              <img src="assets/images/work_mv.jpg" alt="Music Video" loading="lazy" decoding="async" width="400" height="250" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+              <img src="assets/images/work_mv.jpg" alt="Music Video" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
               <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
                 <div class="w-12 h-12 rounded-full bg-pink-500/90 text-white flex items-center justify-center shadow-lg shadow-pink-500/50 transform group-hover:scale-110 transition">
                   <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-white"></i>
@@ -471,7 +489,7 @@
                data-img="assets/images/hero_cinematic.jpg"
                data-video="assets/videos/sample-cinematic.mp4">
             <div class="relative aspect-[16/10] overflow-hidden bg-black">
-              <img src="assets/images/hero_cinematic.jpg" alt="Corporate film" loading="lazy" decoding="async" width="400" height="250" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+              <img src="assets/images/hero_cinematic.jpg" alt="Corporate film" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
               <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
                 <div class="w-12 h-12 rounded-full bg-amber-400/90 text-black flex items-center justify-center shadow-lg shadow-amber-500/50 transform group-hover:scale-110 transition">
                   <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-black"></i>
@@ -494,7 +512,7 @@
                data-img="assets/images/shooting_set.jpg"
                data-video="assets/videos/sample-cinematic.mp4">
             <div class="relative aspect-[16/10] overflow-hidden bg-black">
-              <img src="assets/images/shooting_set.jpg" alt="Documentary" loading="lazy" decoding="async" width="400" height="250" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+              <img src="assets/images/shooting_set.jpg" alt="Documentary" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
               <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
                 <div class="w-12 h-12 rounded-full bg-emerald-400/90 text-black flex items-center justify-center shadow-lg shadow-emerald-500/50 transform group-hover:scale-110 transition">
                   <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-black"></i>
@@ -839,10 +857,10 @@
   </div>
 
 
-  <!-- Application Scripts (Minified & Deferred to never block initial DOM rendering) -->
-  <script defer src="js/character-runner.min.js"></script>
-  <script defer src="js/video-controller.min.js"></script>
-  <script defer src="js/app.min.js"></script>
+  <!-- Application Scripts -->
+  <script src="js/character-runner.js"></script>
+  <script src="js/video-controller.js"></script>
+  <script src="js/app.js"></script>
 
 </body>
 </html>

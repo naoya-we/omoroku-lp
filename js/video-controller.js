@@ -42,6 +42,7 @@ class VideoController {
       { id: 'premiere', imageSrc: 'assets/images/premiere_screening.jpg', label: 'CINEMA PREMIERE', timeStart: 24 }
     ];
 
+    this.loadedImages = {};
     this.currentChapterIndex = 0;
     this.targetChapterIndex = 0;
     this.chapterBlend = 0; // 0 to 1 transition progress
@@ -54,12 +55,23 @@ class VideoController {
   }
 
   init() {
+    this.preloadChapterImages();
     this.initCanvas();
     this.setupVideo();
     this.startScrubLoop();
     this.setupScrollListeners();
     this.setupHUDControls();
     this.startCanvasLoop();
+  }
+
+  preloadChapterImages() {
+    this.chapters.forEach((chap, idx) => {
+      const img = new Image();
+      img.src = chap.imageSrc;
+      img.onload = () => {
+        this.loadedImages[idx] = img;
+      };
+    });
   }
 
   initCanvas() {
@@ -507,15 +519,8 @@ class VideoController {
   startCanvasLoop() {
     if (!this.canvas || !this.ctx) return;
 
-    let isVisible = !document.hidden;
-    document.addEventListener('visibilitychange', () => {
-      isVisible = !document.hidden;
-    });
-
     const render = () => {
-      if (isVisible) {
-        this.renderCanvasFrame();
-      }
+      this.renderCanvasFrame();
       requestAnimationFrame(render);
     };
     requestAnimationFrame(render);

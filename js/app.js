@@ -13,10 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Lucide Icons
   if (window.lucide) {
     lucide.createIcons();
-  } else {
-    window.addEventListener('load', () => {
-      if (window.lucide) lucide.createIcons();
-    });
   }
 
   // Initialize Video Controller & Character Runner
@@ -71,20 +67,16 @@ function initScrollAnimations() {
     }
   });
 
-  // Hero Title entrance motion (keeps text visible immediately for sub-second FCP/LCP)
-  gsap.from('.hero-title-line', {
-    y: 25,
-    duration: 0.9,
-    stagger: 0.12,
-    ease: 'power3.out'
-  });
+  // Hero Title reveal on page load
+  gsap.fromTo('.hero-title-line',
+    { opacity: 0, y: 60, skewY: 4 },
+    { opacity: 1, y: 0, skewY: 0, duration: 1.4, stagger: 0.2, ease: 'power4.out', delay: 0.2 }
+  );
 
-  gsap.from('.hero-fade-in', {
-    y: 15,
-    duration: 0.8,
-    stagger: 0.08,
-    ease: 'power2.out'
-  });
+  gsap.fromTo('.hero-fade-in',
+    { opacity: 0, y: 20 },
+    { opacity: 1, y: 0, duration: 1.0, stagger: 0.15, ease: 'power2.out', delay: 0.6 }
+  );
 }
 
 /**
