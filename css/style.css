@@ -507,17 +507,124 @@ body {
 }
 
 /* ==========================================================================
-   CINEMATIC VOLUMETRIC FOG & MIST SYSTEM
+   CINEMATIC LOADER & VOLUMETRIC FOG SYSTEM
    ========================================================================== */
 .cinematic-fog-wrapper {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 15;
-  pointer-events: none;
+  z-index: 95; /* Sits above everything during loading */
   overflow: hidden;
-  transition: opacity 0.5s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 7, 10, 0.94);
+  pointer-events: auto;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.8s ease;
+}
+
+/* When the user enters the film, fog drops behind content */
+.cinematic-fog-wrapper.entered {
+  pointer-events: none !important;
+  background: transparent;
+  z-index: 15;
+}
+
+/* Center Loader Card (Mist-shrouded Glassmorphism) */
+.loader-content {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 380px;
+  width: 88%;
+  padding: 28px 24px;
+  background: rgba(14, 14, 24, 0.72);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 45px rgba(6, 182, 212, 0.14);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loader-emblem-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-glow-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.6), rgba(245, 158, 11, 0.35));
+  filter: blur(10px);
+  animation: emblemPulse 2.4s infinite alternate;
+}
+
+.loader-emblem {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  background: #09090e;
+  border: 1px solid rgba(6, 182, 212, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.25);
+}
+
+.loader-brand {
+  margin-bottom: 18px;
+}
+
+.loader-progress-box {
+  width: 100%;
+}
+
+.loader-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.loader-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #06b6d4, #38bdf8, #f59e0b);
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.9);
+  transition: width 0.2s ease-out;
+}
+
+.loader-enter-cta {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeInPrompt 0.5s ease-out forwards;
+}
+
+@keyframes emblemPulse {
+  0% { transform: scale(0.94); opacity: 0.5; }
+  100% { transform: scale(1.08); opacity: 0.95; }
+}
+
+@keyframes fadeInPrompt {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .fog-layer {
