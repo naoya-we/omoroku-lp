@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMOROKU FILMS | 次世代シネマティック映像制作スタジオ</title>
+  <meta name="description" content="スクロールとともに動き出す、映画のようなストーリーテリング。企画・撮影・カラーグレーディング・CGまでワンストップで制作する映像プロダクションOMOROKU FILMS。">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Outfit:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cinema: {
+              950: '#07070a',
+              900: '#0e0e15',
+              800: '#161622',
+              gold: '#f59e0b',
+              cyan: '#06b6d4',
+              red: '#ef4444'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans JP"', 'sans-serif'],
+            display: ['"Outfit"', '"Noto Sans JP"', 'sans-serif'],
+            mono: ['"Space Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Cinematic CSS -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+</head>
+
+<body class="bg-[#07070a] text-gray-100 antialiased relative">
+
+  <!-- Film Grain Overlay -->
+  <div class="film-grain"></div>
+
+  <!-- Cinemascope Letterbox (2.39:1 Aspect Ratio Framing) -->
+  <div class="letterbox-bar letterbox-top"></div>
+  <div class="letterbox-bar letterbox-bottom"></div>
+
+  <!-- Background Video & Canvas Cinematic Engine (Video is Front & Center) -->
+  <div class="video-bg-container">
+    <!-- Real Video Source (Plays on scroll / paused on idle) - High Visibility -->
+    <video id="bg-video" class="video-bg-element opacity-95" src="assets/videos/veo_dream_dolly.mp4" playsinline muted preload="auto">
+      <source src="assets/videos/veo_dream_dolly.mp4" type="video/mp4">
+      <source src="assets/videos/sample-cinematic.mp4" type="video/mp4">
+    </video>
+    <!-- Dynamic Canvas Stream for Cinematic Light Flares & Dust -->
+    <canvas id="bg-canvas" class="canvas-bg-element"></canvas>
+    <!-- Vignette & Cinematic Tint Overlay (Subtle Film Border) -->
+    <div class="video-overlay-gradient"></div>
+  </div>
+
+  <!-- Right Side Film Strip Scene Navigator -->
+  <nav class="film-strip-nav hide-in-cinema-mode" aria-label="Scene Navigator">
+    <a href="#hero" class="film-strip-dot active" title="Prologue">
+      <span class="film-strip-tooltip">PROLOGUE</span>
+    </a>
+    <a href="#storyboard" class="film-strip-dot" title="01. Pre-Production">
+      <span class="film-strip-tooltip">01. PRE-PROD</span>
+    </a>
+    <a href="#shooting" class="film-strip-dot" title="02. Shooting">
+      <span class="film-strip-tooltip">02. SHOOTING</span>
+    </a>
+    <a href="#postproduction" class="film-strip-dot" title="03. Post-Production">
+      <span class="film-strip-tooltip">03. COLOR & VFX</span>
+    </a>
+    <a href="#premiere" class="film-strip-dot" title="04. Premiere">
+      <span class="film-strip-tooltip">04. PREMIERE</span>
+    </a>
+    <a href="#works" class="film-strip-dot" title="Works">
+      <span class="film-strip-tooltip">WORKS</span>
+    </a>
+    <a href="#pricing" class="film-strip-dot" title="Pricing">
+      <span class="film-strip-tooltip">PRICING</span>
+    </a>
+  </nav>
+
+  <!-- ========================================================================
+       CINEMATIC CAMERA HUD (FIXED OVERLAY)
+       ======================================================================== -->
+  <aside class="fixed top-8 left-0 right-0 z-30 px-6 sm:px-10 pointer-events-none" aria-label="Camera HUD">
+    <div class="max-w-7xl mx-auto flex items-center justify-between pointer-events-auto">
+      
+      <!-- Brand Logo -->
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-amber-500 p-[1px] shadow-lg shadow-cyan-950/60">
+          <div class="w-full h-full bg-[#07070a] rounded-lg flex items-center justify-center group-hover:bg-opacity-80 transition">
+            <i data-lucide="clapperboard" class="w-5 h-5 text-cyan-400"></i>
+          </div>
+        </div>
+        <div>
+          <span class="font-display font-black text-xl tracking-wider text-white">OMOROKU<span class="text-cyan-400">.</span>FILMS</span>
+          <span class="block text-[9px] font-mono tracking-widest text-gray-400 uppercase -mt-1">Studio Tokyo • 4K RAW</span>
+        </div>
+      </a>
+
+      <!-- Camera Status & Timecode Center HUD -->
+      <div class="hidden md:flex items-center gap-4 px-4 py-2 rounded-full glass-panel border border-white/10 shadow-2xl">
+        <!-- REC Indicator -->
+        <div class="flex items-center gap-2 pr-3 border-r border-white/10">
+          <span id="hud-rec-badge" class="w-2.5 h-2.5 rounded-full bg-gray-500 transition-colors"></span>
+          <span id="hud-status-text" class="text-gray-400 font-medium tracking-wider text-xs">STANDBY</span>
+        </div>
+
+        <!-- Timecode Counter -->
+        <div class="flex items-center gap-1.5 font-mono text-xs text-cyan-300">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span id="hud-timecode" class="tracking-widest">00:00:00:00</span>
+        </div>
+
+        <!-- Active Chapter Pill -->
+        <div class="hidden lg:block pl-3 border-l border-white/10">
+          <span id="hud-chapter-pill" class="text-[11px] font-mono text-amber-400 uppercase font-semibold">
+            CH 1: PROLOGUE
+          </span>
+        </div>
+
+        <!-- FPS & Format -->
+        <div class="hidden xl:flex items-center gap-2 pl-3 border-l border-white/10 text-[10px] font-mono text-gray-400">
+          <span id="hud-fps" class="text-emerald-400">60 FPS</span>
+          <span>•</span>
+          <span>ANAMORPHIC 2.39:1</span>
+        </div>
+      </div>
+
+      <!-- Controls & Quick Navigation -->
+      <div class="flex items-center gap-2.5">
+        <!-- Cinema Immersion Mode Toggle (NEW) -->
+        <button id="cinema-mode-btn" class="flex items-center text-xs font-mono px-3 py-1.5 rounded-lg glass-panel hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 transition shadow-lg" title="字幕・UIを最小化して映像に100%没入">
+          <i data-lucide="clapperboard" class="w-3.5 h-3.5 mr-1 text-cyan-400"></i>
+          <span class="hidden sm:inline">Cinema Mode</span>
+        </button>
+
+        <!-- Veo Video Load / File Picker -->
+        <label class="flex items-center text-xs font-mono px-3 py-1.5 rounded-lg glass-panel hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition cursor-pointer shadow-lg" title="AI Studio (Veo) で生成した動画（MP4）を読み込む">
+          <i data-lucide="video" class="w-3.5 h-3.5 mr-1 text-cyan-400"></i>
+          <span class="hidden md:inline">Veo動画読込</span>
+          <input type="file" id="veo-video-input" accept="video/mp4,video/webm,video/*" class="hidden">
+        </label>
+
+        <!-- Mode Switcher (Scroll-Play vs Scrub) -->
+        <button id="mode-toggle-btn" class="hidden sm:flex items-center text-xs font-mono px-3 py-1.5 rounded-lg glass-panel hover:bg-white/10 text-gray-300 border border-white/10 transition" title="再生モード切替">
+          <i data-lucide="play" class="w-3.5 h-3.5 mr-1 text-cyan-400"></i>
+          <span>Mode: Scroll-Play</span>
+        </button>
+
+        <!-- Ambient Sound Toggle -->
+        <button id="sound-toggle-btn" class="hidden sm:flex items-center text-xs font-mono px-3 py-1.5 rounded-lg glass-panel hover:bg-white/10 text-gray-300 border border-white/10 transition" title="シネマ音響トグル">
+          <i data-lucide="volume-x" class="w-3.5 h-3.5 mr-1 text-gray-400"></i>
+          <span>Sound: OFF</span>
+        </button>
+
+        <!-- CTA Quote Button -->
+        <a href="#contact" class="flex items-center gap-2 text-xs font-bold px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black shadow-lg shadow-cyan-500/25 transition transform hover:scale-105">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          <span>制作相談</span>
+        </a>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Viewfinder Corner Marks (Cinematic Cam Frame) -->
+  <div class="viewfinder-corner tl"></div>
+  <div class="viewfinder-corner tr"></div>
+  <div class="viewfinder-corner bl"></div>
+  <div class="viewfinder-corner br"></div>
+
+  <!-- ========================================================================
+       CHARACTER RUNNER RIG (SCROLL VELOCITY DRIVEN)
+       ======================================================================== -->
+  <!-- Container where articulated cameraman moves and walks/runs -->
+  <div id="character-container"></div>
+
+  <!-- Bottom Timeline Progress Track -->
+  <div class="character-track">
+    <div id="character-track-progress" class="character-track-progress"></div>
+  </div>
+
+
+  <!-- ========================================================================
+       MAIN PAGE CONTENT (SCROLLABLE SECTIONS)
+       ======================================================================== -->
+  <main class="relative z-10">
+
+    <!-- ==========================================
+         HERO SECTION (PROLOGUE)
+         ========================================== -->
+    <section id="hero" class="min-h-screen flex flex-col justify-center items-center px-6 sm:px-12 relative pt-20 pb-28">
+      <div class="max-w-5xl mx-auto text-center hide-in-cinema-mode">
+        
+        <!-- Live Rec Status Tag -->
+        <div class="hero-fade-in inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full glass-panel border border-cyan-500/30 text-cyan-300 text-xs font-mono mb-8 shadow-lg shadow-cyan-950/40">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span>CINEMATIC VISUAL STORYTELLING STUDIO</span>
+        </div>
+
+        <!-- Main Grand Title -->
+        <h1 class="font-display font-black text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight leading-[1.08] mb-6">
+          <span class="hero-title-line block text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-100 to-gray-400">
+            心揺さぶる一秒を、
+          </span>
+          <span class="hero-title-line block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-300 glow-text-cyan">
+            世界へ刻み込む。
+          </span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="hero-fade-in max-w-2xl mx-auto text-gray-300 text-base sm:text-lg md:text-xl font-light leading-relaxed mb-10">
+          企画構成から4Kシネマ撮影、DaVinci Resolveによる色彩調律、劇伴音響まで。<br class="hidden sm:inline">
+          スクロールに合わせて動き出す、ひとつの映画のような映像世界をお楽しみください。
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="hero-fade-in flex flex-wrap items-center justify-center gap-4">
+          <a href="#storyboard" class="flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-sm shadow-xl shadow-cyan-500/20 transition transform hover:-translate-y-0.5">
+            <i data-lucide="play-circle" class="w-5 h-5 text-black"></i>
+            <span>映像制作の旅を始める</span>
+          </a>
+
+          <a href="#works" class="flex items-center gap-2.5 px-7 py-3.5 rounded-xl glass-panel hover:bg-white/10 text-white font-medium text-sm border border-white/20 transition transform hover:-translate-y-0.5">
+            <i data-lucide="film" class="w-4 h-4 text-amber-400"></i>
+            <span>作品実績を見る</span>
+          </a>
+        </div>
+
+        <!-- Scroll Directive Affordance -->
+        <div class="hero-fade-in mt-16 flex flex-col items-center gap-2 opacity-70 hover:opacity-100 transition">
+          <span class="font-mono text-[11px] tracking-widest text-cyan-300 uppercase">Scroll to Direct the Film</span>
+          <div class="w-5 h-8 rounded-full border border-cyan-400/50 flex items-start justify-center p-1">
+            <div class="w-1 h-2 rounded-full bg-cyan-400 animate-bounce"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Divider Streak -->
+    <div class="anamorphic-streak"></div>
+
+
+    <!-- ==========================================
+         SCENE 01: PRE-PRODUCTION & STORYBOARD (CINEMA STAGE 01)
+         ========================================== -->
+    <section id="storyboard" class="story-section min-h-screen flex items-end justify-start px-6 sm:px-12 lg:px-20 pb-28 pt-24 relative pointer-events-none">
+      <!-- Floating Cinema Lower-Third Subtitle HUD -->
+      <div class="pointer-events-auto cinema-subtitle-banner hide-in-cinema-mode rounded-2xl p-6 sm:p-8 max-w-2xl shadow-2xl border border-white/10 relative">
+        <div class="flex items-center justify-between mb-3">
+          <div class="chapter-badge text-cyan-400 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <span>SCENE 01 / PRE-PRODUCTION</span>
+          </div>
+          <span class="text-[10px] font-mono text-gray-400">TC 00:00:08:00</span>
+        </div>
+
+        <h2 class="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-white mb-3 leading-tight">
+          感情の導火線に火をつける、<br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-amber-500">緻密な脚本と絵コンテ。</span>
+        </h2>
+
+        <p class="text-gray-300 text-xs sm:text-sm leading-relaxed mb-5">
+          すべての名作は1行の言葉と1コマのスケッチから。徹底したブランドヒアリングをもとに、観る者の心拍数を設計するシネマスケールの絵コンテを構築します。
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-cyan-300">#シナリオ設計</span>
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-cyan-300">#ビジュアルコンテ</span>
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-cyan-300">#感情曲線演出</span>
+          <a href="assets/images/storyboard_concept.jpg" target="_blank" class="ml-auto text-amber-400 hover:text-amber-300 flex items-center gap-1">
+            <i data-lucide="image" class="w-3.5 h-3.5"></i>
+            <span>コンテ原案</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider Streak -->
+    <div class="anamorphic-streak"></div>
+
+
+    <!-- ==========================================
+         SCENE 02: PRODUCTION & SHOOTING (CINEMA STAGE 02)
+         ========================================== -->
+    <section id="shooting" class="story-section min-h-screen flex items-end justify-end px-6 sm:px-12 lg:px-20 pb-28 pt-24 relative pointer-events-none">
+      <!-- Floating Cinema Lower-Third Subtitle HUD (Right Aligned) -->
+      <div class="pointer-events-auto cinema-subtitle-banner hide-in-cinema-mode rounded-2xl p-6 sm:p-8 max-w-2xl shadow-2xl border border-cyan-500/30 relative">
+        <div class="flex items-center justify-between mb-3">
+          <div class="chapter-badge text-cyan-400 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            <span>SCENE 02 / CINEMATOGRAPHY</span>
+          </div>
+          <span class="text-[10px] font-mono text-cyan-300">RED MONSTRO 8K • 60 FPS</span>
+        </div>
+
+        <h2 class="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-white mb-3 leading-tight">
+          光と構図で、<br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400">被写体の魂を切り取る現場力。</span>
+        </h2>
+
+        <p class="text-gray-300 text-xs sm:text-sm leading-relaxed mb-5">
+          ただ綺麗に撮るのではない。アナモルフィックレンズの美しい光芒、息をのむステディカムトラッキングによって、被写体の熱狂とリアルな息遣いを映像へと焼きつけます。
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-cyan-300">#8K RAWシネマカメラ</span>
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-cyan-300">#アナモルフィック光彩</span>
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-cyan-300">#特機ジンバル追従</span>
+          <a href="assets/images/shooting_set.jpg" target="_blank" class="ml-auto text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+            <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+            <span>撮影現場スチル</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider Streak -->
+    <div class="anamorphic-streak"></div>
+
+
+    <!-- ==========================================
+         SCENE 03: POST-PRODUCTION & COLOR (CINEMA STAGE 03)
+         ========================================== -->
+    <section id="postproduction" class="story-section min-h-screen flex items-end justify-start px-6 sm:px-12 lg:px-20 pb-28 pt-24 relative pointer-events-none">
+      <!-- Floating Cinema Lower-Third Subtitle HUD -->
+      <div class="pointer-events-auto cinema-subtitle-banner hide-in-cinema-mode rounded-2xl p-6 sm:p-8 max-w-2xl shadow-2xl border border-emerald-500/30 relative">
+        <div class="flex items-center justify-between mb-3">
+          <div class="chapter-badge text-emerald-400 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>SCENE 03 / POST-PRODUCTION</span>
+          </div>
+          <span class="text-[10px] font-mono text-emerald-300">DCI-P3 100% CALIBRATED</span>
+        </div>
+
+        <h2 class="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-white mb-3 leading-tight">
+          1フレーム、1デシベルに宿る、<br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-400">圧倒的な色彩調律と音響。</span>
+        </h2>
+
+        <p class="text-gray-300 text-xs sm:text-sm leading-relaxed mb-5">
+          DaVinci Resolveによるトーン設計、3D空間オーディオ/オリジナル劇伴、精密なモーショングラフィックス。すべての要素が交差したとき、心揺さぶる総合芸術が完成します。
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-emerald-300">#DaVinci Resolveグレーディング</span>
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-emerald-300">#立体音響デザイン</span>
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-emerald-300">#シネマVFX合成</span>
+          <a href="assets/images/color_grading.jpg" target="_blank" class="ml-auto text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+            <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+            <span>カラーコンソール</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider Streak -->
+    <div class="anamorphic-streak"></div>
+
+
+    <!-- ==========================================
+         SCENE 04: PREMIERE & AUDIENCE IMPACT (CINEMA STAGE 04)
+         ========================================== -->
+    <section id="premiere" class="story-section min-h-screen flex items-end justify-end px-6 sm:px-12 lg:px-20 pb-28 pt-24 relative pointer-events-none">
+      <!-- Floating Cinema Lower-Third Subtitle HUD (Right Aligned) -->
+      <div class="pointer-events-auto cinema-subtitle-banner hide-in-cinema-mode rounded-2xl p-6 sm:p-8 max-w-2xl shadow-2xl border border-amber-500/30 relative">
+        <div class="flex items-center justify-between mb-3">
+          <div class="chapter-badge text-amber-400 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span>SCENE 04 / AUDIENCE IMPACT</span>
+          </div>
+          <span class="text-[10px] font-mono text-amber-300">PREMIERE RELEASED</span>
+        </div>
+
+        <h2 class="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-white mb-3 leading-tight">
+          届き、心に残り、<br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-500">ビジネスを大きく跳躍させる。</span>
+        </h2>
+
+        <p class="text-gray-300 text-xs sm:text-sm leading-relaxed mb-5">
+          美しいだけの映像で終わらせない。劇場、Web、SNS、タクシー広告など、届ける視聴環境に最適化。視聴者の態度変容を促し、ブランド想起と事業成果を最大化します。
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-amber-300">#成果直結マーケティング</span>
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-amber-300">#縦型リール同時展開</span>
+          <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-amber-300">#ブランド想起最大化</span>
+          <a href="assets/images/premiere_screening.jpg" target="_blank" class="ml-auto text-amber-400 hover:text-amber-300 flex items-center gap-1">
+            <i data-lucide="film" class="w-3.5 h-3.5"></i>
+            <span>劇場試写会</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider Streak -->
+    <div class="anamorphic-streak"></div>
+
+
+    <!-- ==========================================
+         WORKS / PORTFOLIO SECTION
+         ========================================== -->
+    <section id="works" class="py-28 px-6 sm:px-12 lg:px-20 relative">
+      <div class="max-w-7xl mx-auto hide-in-cinema-mode">
+        
+        <!-- Section Header -->
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="chapter-badge text-cyan-400 tracking-widest block mb-2">PORTFOLIO & SHOWCASE</span>
+          <h2 class="font-display font-black text-3xl sm:text-5xl text-white mb-4">
+            記憶に刻まれる、<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-amber-300">制作実績。</span>
+          </h2>
+          <p class="text-gray-400 text-sm sm:text-base">
+            テレビCM、Webブランディングムービー、MV、採用映像まで、多岐にわたるジャンルで高精細な映像世界を構築しています。
+          </p>
+        </div>
+
+        <!-- Works Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- Work Card 1 -->
+          <div class="work-card cine-card rounded-2xl overflow-hidden glass-panel cursor-pointer group"
+               data-title="LUXURY AUTOMOTIVE『THE OVERLAND RUN』"
+               data-category="COMMERCIAL FILM"
+               data-desc="早朝の霧深い海岸線を疾走するスーパースポーツのWeb CM。アナモルフィックレンズによる圧倒的な光のフレアと迫真のカーチェイス撮影。"
+               data-img="assets/images/work_commercial.jpg"
+               data-video="assets/videos/sample-cinematic.mp4">
+            <div class="relative aspect-[16/10] overflow-hidden bg-black">
+              <img src="assets/images/work_commercial.jpg" alt="Commercial film" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+              <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
+                <div class="w-12 h-12 rounded-full bg-cyan-400/90 text-black flex items-center justify-center shadow-lg shadow-cyan-500/50 transform group-hover:scale-110 transition">
+                  <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-black"></i>
+                </div>
+              </div>
+              <span class="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] font-mono bg-black/70 text-cyan-300 border border-cyan-500/30">4K CM</span>
+            </div>
+            <div class="p-5">
+              <span class="text-xs font-mono text-cyan-400 tracking-wider uppercase">Commercial Film</span>
+              <h3 class="font-bold text-white text-base mt-1 group-hover:text-cyan-300 transition">THE OVERLAND RUN</h3>
+              <p class="text-gray-400 text-xs mt-2 line-clamp-2">早朝の霧深い海岸線を疾走するスーパースポーツのWeb CM。</p>
+            </div>
+          </div>
+
+          <!-- Work Card 2 -->
+          <div class="work-card cine-card rounded-2xl overflow-hidden glass-panel cursor-pointer group"
+               data-title="CYBERPUNK LIVE『NEON ECHOES』"
+               data-category="MUSIC VIDEO"
+               data-desc="ネオンとレーザーが交錯する近未来ステージでのアーティストMV。高速クレーンワークとダイナミックなライティング演出。"
+               data-img="assets/images/work_mv.jpg"
+               data-video="assets/videos/sample-cinematic.mp4">
+            <div class="relative aspect-[16/10] overflow-hidden bg-black">
+              <img src="assets/images/work_mv.jpg" alt="Music Video" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+              <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
+                <div class="w-12 h-12 rounded-full bg-pink-500/90 text-white flex items-center justify-center shadow-lg shadow-pink-500/50 transform group-hover:scale-110 transition">
+                  <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-white"></i>
+                </div>
+              </div>
+              <span class="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] font-mono bg-black/70 text-pink-300 border border-pink-500/30">MUSIC VIDEO</span>
+            </div>
+            <div class="p-5">
+              <span class="text-xs font-mono text-pink-400 tracking-wider uppercase">Music Video</span>
+              <h3 class="font-bold text-white text-base mt-1 group-hover:text-pink-300 transition">NEON ECHOES</h3>
+              <p class="text-gray-400 text-xs mt-2 line-clamp-2">ネオンとレーザーが交錯する近未来ステージでのアーティストMV。</p>
+            </div>
+          </div>
+
+          <!-- Work Card 3 -->
+          <div class="work-card cine-card rounded-2xl overflow-hidden glass-panel cursor-pointer group"
+               data-title="BRAND VISION『HORIZON AHEAD』"
+               data-category="CORPORATE FILM"
+               data-desc="グローバル展開を見据えたテクノロジー企業のビジョンムービー。壮大な自然ロケーションと洗練されたCGインフォグラフィックスの融合。"
+               data-img="assets/images/hero_cinematic.jpg"
+               data-video="assets/videos/sample-cinematic.mp4">
+            <div class="relative aspect-[16/10] overflow-hidden bg-black">
+              <img src="assets/images/hero_cinematic.jpg" alt="Corporate film" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+              <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
+                <div class="w-12 h-12 rounded-full bg-amber-400/90 text-black flex items-center justify-center shadow-lg shadow-amber-500/50 transform group-hover:scale-110 transition">
+                  <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-black"></i>
+                </div>
+              </div>
+              <span class="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] font-mono bg-black/70 text-amber-300 border border-amber-500/30">BRAND MOVIE</span>
+            </div>
+            <div class="p-5">
+              <span class="text-xs font-mono text-amber-400 tracking-wider uppercase">Corporate Film</span>
+              <h3 class="font-bold text-white text-base mt-1 group-hover:text-amber-300 transition">HORIZON AHEAD</h3>
+              <p class="text-gray-400 text-xs mt-2 line-clamp-2">グローバル展開を見据えたテクノロジー企業のビジョンムービー。</p>
+            </div>
+          </div>
+
+          <!-- Work Card 4 -->
+          <div class="work-card cine-card rounded-2xl overflow-hidden glass-panel cursor-pointer group"
+               data-title="DOCUMENTARY『THE CRAFT & SOUL』"
+               data-category="DOCUMENTARY"
+               data-desc="100年の伝統を受け継ぐ匠の息遣いに迫るドキュメンタリー。息を呑むマクロ撮影と静寂を活かした音響デザイン。"
+               data-img="assets/images/shooting_set.jpg"
+               data-video="assets/videos/sample-cinematic.mp4">
+            <div class="relative aspect-[16/10] overflow-hidden bg-black">
+              <img src="assets/images/shooting_set.jpg" alt="Documentary" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+              <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
+                <div class="w-12 h-12 rounded-full bg-emerald-400/90 text-black flex items-center justify-center shadow-lg shadow-emerald-500/50 transform group-hover:scale-110 transition">
+                  <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-black"></i>
+                </div>
+              </div>
+              <span class="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] font-mono bg-black/70 text-emerald-300 border border-emerald-500/30">DOCUMENTARY</span>
+            </div>
+            <div class="p-5">
+              <span class="text-xs font-mono text-emerald-400 tracking-wider uppercase">Documentary</span>
+              <h3 class="font-bold text-white text-base mt-1 group-hover:text-emerald-300 transition">THE CRAFT & SOUL</h3>
+              <p class="text-gray-400 text-xs mt-2 line-clamp-2">100年の伝統を受け継ぐ匠の息遣いに迫るドキュメンタリー。</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Divider Streak -->
+    <div class="anamorphic-streak"></div>
+
+
+    <!-- ==========================================
+         PRICING & PRODUCTION PLANS
+         ========================================== -->
+    <section id="pricing" class="py-28 px-6 sm:px-12 lg:px-20 relative">
+      <div class="max-w-7xl mx-auto hide-in-cinema-mode">
+        
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="chapter-badge text-cyan-400 tracking-widest block mb-2">PRICING & PLANS</span>
+          <h2 class="font-display font-black text-3xl sm:text-5xl text-white mb-4">
+            明瞭で安心な、<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-amber-300">制作プラン。</span>
+          </h2>
+          <p class="text-gray-400 text-sm sm:text-base">
+            プロジェクト規模や配信プラットフォームに応じた3つのパッケージ。追加料金のない透明な見積もりをご提案します。
+          </p>
+        </div>
+
+        <!-- 3 Plans Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+          
+          <!-- Plan 1: Standard CM -->
+          <div class="rounded-2xl glass-panel p-8 flex flex-col justify-between border border-white/10 hover:border-cyan-500/40 transition">
+            <div>
+              <span class="font-mono text-xs text-gray-400 uppercase tracking-wider">Web Promo / SNS</span>
+              <h3 class="font-bold text-2xl text-white mt-1">STANDARD WEB CM</h3>
+              <div class="my-6 pb-6 border-b border-white/10">
+                <span class="text-3xl sm:text-4xl font-black font-mono text-cyan-400">¥450,000〜</span>
+                <span class="text-xs text-gray-400 ml-1">（税抜）</span>
+              </div>
+              <ul class="space-y-3.5 text-xs text-gray-300">
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-400"></i>
+                  <span>15秒〜30秒 Web広告・SNS特化動画</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-400"></i>
+                  <span>企画構成・絵コンテ作成</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-400"></i>
+                  <span>4Kシネマカメラ撮影（1Day）</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-400"></i>
+                  <span>カラーグレーディング・BGM選定</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-400"></i>
+                  <span>納期：約3週間</span>
+                </li>
+              </ul>
+            </div>
+            <a href="#contact" class="mt-8 block text-center py-3 rounded-xl glass-panel hover:bg-white/10 text-white font-semibold text-sm border border-white/20 transition">
+              このプランで相談する
+            </a>
+          </div>
+
+          <!-- Plan 2: Cinematic Brand (Popular) -->
+          <div class="rounded-2xl glass-panel-cyan p-8 flex flex-col justify-between border border-cyan-500/60 relative shadow-2xl shadow-cyan-950/50 transform md:-translate-y-3">
+            <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-mono text-[10px] font-black uppercase tracking-wider shadow-lg">
+              MOST POPULAR
+            </div>
+            <div>
+              <span class="font-mono text-xs text-cyan-400 uppercase tracking-wider">Brand Film / Recruit</span>
+              <h3 class="font-bold text-2xl text-white mt-1">CINEMATIC BRAND MOVIE</h3>
+              <div class="my-6 pb-6 border-b border-cyan-500/20">
+                <span class="text-3xl sm:text-4xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-amber-300">¥980,000〜</span>
+                <span class="text-xs text-gray-400 ml-1">（税抜）</span>
+              </div>
+              <ul class="space-y-3.5 text-xs text-gray-200">
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-300"></i>
+                  <span>1分〜2分 本格ブランディングムービー</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-300"></i>
+                  <span>ストーリー脚本設計・ロケ地手配・キャスティング支援</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-300"></i>
+                  <span>アナモルフィックシネマ撮影（2Days / 照明クルー帯同）</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-300"></i>
+                  <span>DaVinci Resolveシネマグレーディング・劇伴マスタリング</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-300"></i>
+                  <span>横型16:9 ＋ 縦型リール用カット2本 同梱納品</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-cyan-300"></i>
+                  <span>納期：約4〜5週間</span>
+                </li>
+              </ul>
+            </div>
+            <a href="#contact" class="mt-8 block text-center py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-bold text-sm shadow-xl shadow-cyan-500/30 transition">
+              人気プランで相談する
+            </a>
+          </div>
+
+          <!-- Plan 3: Full Campaign Production -->
+          <div class="rounded-2xl glass-panel-gold p-8 flex flex-col justify-between border border-amber-500/30 hover:border-amber-500/60 transition">
+            <div>
+              <span class="font-mono text-xs text-amber-400 uppercase tracking-wider">TV CM / Global Vision</span>
+              <h3 class="font-bold text-2xl text-white mt-1">FLAGSHIP CAMPAIGN</h3>
+              <div class="my-6 pb-6 border-b border-white/10">
+                <span class="text-3xl sm:text-4xl font-black font-mono text-amber-400">¥2,200,000〜</span>
+                <span class="text-xs text-gray-400 ml-1">（税抜）</span>
+              </div>
+              <ul class="space-y-3.5 text-xs text-gray-300">
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-amber-400"></i>
+                  <span>テレビCM・全国タクシー広告・大型サイネージ対応</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-amber-400"></i>
+                  <span>映画監督・撮影監督（DoP）専任体制</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-amber-400"></i>
+                  <span>ARRI 6K RAWシネマカメラ・特機・クレーン撮影</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-amber-400"></i>
+                  <span>ハイエンド3D CG/VFX合成・オリジナル楽曲生楽器収録</span>
+                </li>
+                <li class="flex items-center gap-2.5">
+                  <i data-lucide="check" class="w-4 h-4 text-amber-400"></i>
+                  <span>放送局MA審査・各種フォーマット完全対応</span>
+                </li>
+              </ul>
+            </div>
+            <a href="#contact" class="mt-8 block text-center py-3 rounded-xl glass-panel hover:bg-white/10 text-amber-300 font-semibold text-sm border border-amber-500/30 transition">
+              フラッグシップで相談する
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Divider Streak -->
+    <div class="anamorphic-streak"></div>
+
+
+    <!-- ==========================================
+         CONTACT & CONSULTATION FORM
+         ========================================== -->
+    <section id="contact" class="py-28 px-6 sm:px-12 lg:px-20 relative">
+      <div class="max-w-4xl mx-auto hide-in-cinema-mode">
+        
+        <div class="text-center mb-12">
+          <span class="chapter-badge text-cyan-400 tracking-widest block mb-2">CONTACT & BOOKING</span>
+          <h2 class="font-display font-black text-3xl sm:text-5xl text-white mb-4">
+            新しい物語を、<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-amber-300">ここから始めよう。</span>
+          </h2>
+          <p class="text-gray-400 text-sm sm:text-base">
+            映像の企画段階からのご相談、概算お見積もりの作成、ディレクターへのヒアリングはすべて無料です。
+          </p>
+        </div>
+
+        <div class="glass-panel rounded-3xl p-8 sm:p-12 border border-white/10 shadow-2xl relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <!-- Success Box (Hidden initially) -->
+          <div id="form-success-box" class="hidden text-center py-12 space-y-4">
+            <div class="w-16 h-16 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-4 border border-cyan-500/40">
+              <i data-lucide="check-circle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="font-bold text-2xl text-white">お問い合わせを受け付けました</h3>
+            <p class="text-gray-300 text-sm max-w-md mx-auto">
+              専任のプロデューサーより、1営業日以内にご返信およびヒアリング日程のご案内を差し上げます。
+            </p>
+          </div>
+
+          <!-- Form Element -->
+          <form id="contact-form" class="space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-xs font-mono text-gray-300 mb-2">お名前 <span class="text-red-400">*</span></label>
+                <input type="text" required placeholder="山田 太郎" class="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-white text-sm focus:border-cyan-400 focus:outline-none transition">
+              </div>
+
+              <div>
+                <label class="block text-xs font-mono text-gray-300 mb-2">貴社名 / 組織名</label>
+                <input type="text" placeholder="株式会社〇〇" class="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-white text-sm focus:border-cyan-400 focus:outline-none transition">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-xs font-mono text-gray-300 mb-2">メールアドレス <span class="text-red-400">*</span></label>
+                <input type="email" required placeholder="contact@example.com" class="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-white text-sm focus:border-cyan-400 focus:outline-none transition">
+              </div>
+
+              <div>
+                <label class="block text-xs font-mono text-gray-300 mb-2">ご検討の制作種別</label>
+                <select class="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-white text-sm focus:border-cyan-400 focus:outline-none transition">
+                  <option value="brand">ブランディングムービー / 企業VP</option>
+                  <option value="cm">Web CM / SNS広告映像</option>
+                  <option value="mv">ミュージックビデオ / ライブ収録</option>
+                  <option value="recruit">採用動画 / ドキュメンタリー</option>
+                  <option value="other">その他 / 未定</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-mono text-gray-300 mb-2">ご予算感</label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <label class="flex items-center gap-2 p-3 rounded-xl bg-black/40 border border-white/10 text-xs text-gray-300 cursor-pointer hover:border-cyan-400/50 transition">
+                  <input type="radio" name="budget" value="40-70" checked class="text-cyan-400">
+                  <span>〜70万円</span>
+                </label>
+                <label class="flex items-center gap-2 p-3 rounded-xl bg-black/40 border border-white/10 text-xs text-gray-300 cursor-pointer hover:border-cyan-400/50 transition">
+                  <input type="radio" name="budget" value="70-150" class="text-cyan-400">
+                  <span>70〜150万円</span>
+                </label>
+                <label class="flex items-center gap-2 p-3 rounded-xl bg-black/40 border border-white/10 text-xs text-gray-300 cursor-pointer hover:border-cyan-400/50 transition">
+                  <input type="radio" name="budget" value="150-300" class="text-cyan-400">
+                  <span>150〜300万円</span>
+                </label>
+                <label class="flex items-center gap-2 p-3 rounded-xl bg-black/40 border border-white/10 text-xs text-gray-300 cursor-pointer hover:border-cyan-400/50 transition">
+                  <input type="radio" name="budget" value="300plus" class="text-cyan-400">
+                  <span>300万円〜</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-mono text-gray-300 mb-2">ご相談内容・ご希望イメージ</label>
+              <textarea rows="4" placeholder="映像で達成したい目的や、参考となる作品イメージ、納期のご希望などをご自由にご記入ください。" class="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-white text-sm focus:border-cyan-400 focus:outline-none transition"></textarea>
+            </div>
+
+            <button type="submit" id="form-submit-btn" class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-bold text-sm tracking-wider uppercase shadow-xl shadow-cyan-500/25 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span>無料相談・お見積もりを送信する</span>
+            </button>
+          </form>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ========================================================================
+       FOOTER
+       ======================================================================== -->
+  <footer class="relative z-10 border-t border-white/10 bg-[#07070a]/90 backdrop-blur-lg pt-16 pb-20 px-6 sm:px-12">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+      
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-amber-500 p-[1px]">
+          <div class="w-full h-full bg-[#07070a] rounded-lg flex items-center justify-center">
+            <i data-lucide="clapperboard" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+        </div>
+        <div>
+          <span class="font-display font-black text-lg text-white">OMOROKU<span class="text-cyan-400">.</span>FILMS</span>
+          <span class="block text-[9px] font-mono tracking-widest text-gray-500 uppercase">A Creative Video Production Studio</span>
+        </div>
+      </div>
+
+      <nav class="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400">
+        <a href="#hero" class="hover:text-white transition">トップ</a>
+        <a href="#storyboard" class="hover:text-white transition">企画</a>
+        <a href="#shooting" class="hover:text-white transition">撮影</a>
+        <a href="#postproduction" class="hover:text-white transition">編集</a>
+        <a href="#works" class="hover:text-white transition">実績</a>
+        <a href="#pricing" class="hover:text-white transition">料金</a>
+        <a href="#contact" class="hover:text-white transition">お問い合わせ</a>
+      </nav>
+
+      <div class="text-[11px] font-mono text-gray-500">
+        &copy; 2026 OMOROKU FILMS. All rights reserved.
+      </div>
+
+    </div>
+  </footer>
+
+
+  <!-- ========================================================================
+       WORKS MODAL PREVIEW (INTERACTIVE LIGHTBOX)
+       ======================================================================== -->
+  <div id="work-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 opacity-0 pointer-events-none transition-opacity duration-300 hidden">
+    <!-- Backdrop -->
+    <div id="work-modal-backdrop" class="absolute inset-0 bg-black/85 backdrop-blur-md"></div>
+
+    <!-- Modal Content -->
+    <div class="relative w-full max-w-4xl glass-panel rounded-2xl overflow-hidden border border-white/20 shadow-2xl z-10">
+      
+      <!-- Close Button -->
+      <button id="modal-close-btn" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center border border-white/20 transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <!-- Video / Image Screen -->
+      <div class="relative aspect-video bg-black">
+        <video id="modal-work-video" class="w-full h-full object-cover hidden" playsinline controls></video>
+        <img id="modal-work-img" src="" alt="Work Preview" class="w-full h-full object-cover hidden">
+      </div>
+
+      <!-- Info Details -->
+      <div class="p-6 sm:p-8 bg-[#0c0c14]">
+        <div class="flex items-center gap-2 mb-2">
+          <span id="modal-work-category" class="text-xs font-mono text-cyan-400 uppercase tracking-wider">CATEGORY</span>
+          <span class="text-gray-600">•</span>
+          <span class="text-xs font-mono text-gray-400">4K 60FPS MASTER</span>
+        </div>
+        <h3 id="modal-work-title" class="font-display font-black text-2xl text-white mb-3">WORK TITLE</h3>
+        <p id="modal-work-desc" class="text-gray-300 text-sm leading-relaxed">Work description details...</p>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- Application Scripts -->
+  <script src="js/character-runner.js"></script>
+  <script src="js/video-controller.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

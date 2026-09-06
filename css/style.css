@@ -1,0 +1,507 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   OMOROKU FILMS — Cinematic Stylesheet
+   ========================================================================== */
+
+:root {
+  --cinema-bg: #07070a;
+  --cinema-surface: #0e0e15;
+  --cinema-card: rgba(22, 22, 34, 0.7);
+  --cinema-border: rgba(255, 255, 255, 0.1);
+  --cinema-gold: #f59e0b;
+  --cinema-cyan: #06b6d4;
+  --cinema-red: #ef4444;
+  --cinema-green: #10b981;
+  --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #07070a;
+}
+::-webkit-scrollbar-thumb {
+  background: #27273a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cinema-cyan);
+}
+
+/* Body & Base */
+body {
+  background-color: var(--cinema-bg);
+  color: #f3f4f6;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+  overflow-x: hidden;
+  selection-background-color: var(--cinema-cyan);
+  selection-color: #000;
+}
+
+/* Film Grain Texture */
+.film-grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Cinemascope Letterbox (2.39:1 aspect ratio bars) */
+.letterbox-bar {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  height: 22px;
+  background-color: #000000;
+  z-index: 50;
+  pointer-events: none;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.letterbox-top {
+  top: 0;
+}
+.letterbox-bottom {
+  bottom: 0;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(14, 14, 22, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-gold {
+  background: rgba(22, 18, 12, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.glass-panel-cyan {
+  background: rgba(10, 20, 28, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+/* Camera Viewfinder Crosshairs & Grid */
+.viewfinder-crosshair {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.35;
+}
+.viewfinder-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+.viewfinder-corner.tl { top: 32px; left: 32px; border-top: 2px solid; border-left: 2px solid; }
+.viewfinder-corner.tr { top: 32px; right: 32px; border-top: 2px solid; border-right: 2px solid; }
+.viewfinder-corner.bl { bottom: 32px; left: 32px; border-bottom: 2px solid; border-left: 2px solid; }
+.viewfinder-corner.br { bottom: 32px; right: 32px; border-bottom: 2px solid; border-right: 2px solid; }
+
+/* REC Blinking Animation */
+@keyframes recPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(0.85); }
+}
+.rec-dot {
+  animation: recPulse 1.2s infinite ease-in-out;
+}
+
+/* Subtle Shimmer for Highlighting */
+@keyframes shimmerSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.shimmer-light {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-light::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  transform: translateX(-100%);
+  animation: shimmerSweep 3.5s infinite;
+}
+
+/* Background Video Layer — Made Primary & Crystal Clear */
+.video-bg-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #000;
+}
+
+.video-bg-element {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  opacity: 0.92;
+  filter: contrast(1.08) brightness(0.96) saturate(1.05);
+  transition: opacity 0.5s ease-in-out, filter 0.5s ease, transform 0.2s ease-out;
+}
+
+.canvas-bg-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  transition: opacity 0.6s ease;
+}
+
+/* Subtle cinematic film gradient (keeps video crystal clear in center) */
+.video-overlay-gradient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(7, 7, 10, 0.05) 0%, rgba(7, 7, 10, 0.3) 65%, rgba(7, 7, 10, 0.7) 100%),
+              linear-gradient(to top, rgba(7, 7, 10, 0.85) 0%, rgba(7, 7, 10, 0.2) 25%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Cinema Subtitle Floating Banner (Film-like lower third) */
+.cinema-subtitle-banner {
+  background: linear-gradient(135deg, rgba(14, 14, 22, 0.75) 0%, rgba(7, 7, 12, 0.85) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Cinema Immersion Mode (Hides UI when toggled) */
+.cinema-immersion-active .hide-in-cinema-mode {
+  opacity: 0 !important;
+  transform: translateY(20px) scale(0.98);
+  pointer-events: none !important;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.hide-in-cinema-mode {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Right Side Film Strip Scene Navigator */
+.film-strip-nav {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.film-strip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  position: relative;
+}
+.film-strip-dot:hover, .film-strip-dot.active {
+  background: var(--cinema-cyan);
+  box-shadow: 0 0 14px var(--cinema-cyan);
+  transform: scale(1.3);
+}
+.film-strip-tooltip {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%) translateX(10px);
+  opacity: 0;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  transition: all 0.2s ease;
+}
+.film-strip-dot:hover .film-strip-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ==========================================================================
+   CHARACTER (DIRECTOR / CREATOR) ANIMATION RIG
+   ========================================================================== */
+
+#character-container {
+  position: fixed;
+  bottom: 16px;
+  left: 5vw;
+  z-index: 45;
+  pointer-events: none;
+  transition: transform 0.15s ease-out;
+}
+
+.character-rig {
+  width: 90px;
+  height: 130px;
+  position: relative;
+  transform-origin: bottom center;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+/* Flip direction */
+.character-rig.facing-left {
+  transform: scaleX(-1);
+}
+
+/* Status Pill attached to character */
+.character-hud-tag {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+/* Limb animations: Walk vs Run vs Idle */
+/* IDLE */
+.state-idle .char-body {
+  animation: charBreathe 2.4s infinite ease-in-out;
+}
+.state-idle .char-head {
+  animation: charHeadTilt 4s infinite ease-in-out;
+}
+.state-idle .char-arm-cam {
+  transform: rotate(0deg);
+}
+
+@keyframes charBreathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+@keyframes charHeadTilt {
+  0%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(-3deg); }
+  70% { transform: rotate(4deg); }
+}
+
+/* WALK */
+.state-walk .character-rig {
+  animation: charBobWalk 0.6s infinite ease-in-out alternate;
+}
+.state-walk .char-leg-left {
+  animation: walkLegL 0.6s infinite linear;
+}
+.state-walk .char-leg-right {
+  animation: walkLegR 0.6s infinite linear;
+}
+.state-walk .char-arm-left {
+  animation: walkArmL 0.6s infinite ease-in-out alternate;
+}
+.state-walk .char-arm-cam {
+  animation: walkCamSway 0.6s infinite ease-in-out alternate;
+}
+
+@keyframes charBobWalk {
+  0% { transform: translateY(0) rotate(2deg); }
+  100% { transform: translateY(-4px) rotate(4deg); }
+}
+@keyframes walkLegL {
+  0% { transform: rotate(-22deg); }
+  50% { transform: rotate(22deg); }
+  100% { transform: rotate(-22deg); }
+}
+@keyframes walkLegR {
+  0% { transform: rotate(22deg); }
+  50% { transform: rotate(-22deg); }
+  100% { transform: rotate(22deg); }
+}
+@keyframes walkArmL {
+  0% { transform: rotate(20deg); }
+  100% { transform: rotate(-20deg); }
+}
+@keyframes walkCamSway {
+  0% { transform: rotate(-4deg) translateY(0); }
+  100% { transform: rotate(4deg) translateY(-2px); }
+}
+
+/* RUN / SPRINT */
+.state-run .character-rig {
+  transform: skewX(-12deg) rotate(14deg);
+  animation: charBobRun 0.28s infinite ease-in-out alternate;
+}
+.state-run.facing-left .character-rig {
+  transform: scaleX(-1) skewX(-12deg) rotate(14deg);
+}
+.state-run .char-leg-left {
+  animation: runLegL 0.32s infinite linear;
+}
+.state-run .char-leg-right {
+  animation: runLegR 0.32s infinite linear;
+}
+.state-run .char-arm-cam {
+  animation: runCamLock 0.32s infinite ease-in-out alternate;
+}
+.state-run .speed-streaks {
+  opacity: 1 !important;
+}
+
+@keyframes charBobRun {
+  0% { transform: translateY(2px) rotate(12deg); }
+  100% { transform: translateY(-8px) rotate(16deg); }
+}
+@keyframes runLegL {
+  0% { transform: rotate(-45deg); }
+  50% { transform: rotate(45deg); }
+  100% { transform: rotate(-45deg); }
+}
+@keyframes runLegR {
+  0% { transform: rotate(45deg); }
+  50% { transform: rotate(-45deg); }
+  100% { transform: rotate(45deg); }
+}
+@keyframes runCamLock {
+  0% { transform: rotate(-10deg) translateY(0); }
+  100% { transform: rotate(6deg) translateY(-4px); }
+}
+
+/* Speed streaks behind running character */
+.speed-streaks {
+  position: absolute;
+  top: 40%;
+  left: -40px;
+  width: 50px;
+  height: 40px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.streak-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cinema-cyan), transparent);
+  margin-bottom: 6px;
+  animation: streakFlow 0.25s infinite linear;
+}
+.streak-line:nth-child(2) { width: 70%; animation-delay: 0.08s; }
+.streak-line:nth-child(3) { width: 90%; animation-delay: 0.15s; }
+
+@keyframes streakFlow {
+  0% { transform: translateX(10px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(-20px); opacity: 0; }
+}
+
+/* Character Track Progress Bar */
+.character-track {
+  position: fixed;
+  bottom: 24px;
+  left: 5vw;
+  right: 5vw;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 44;
+  pointer-events: none;
+}
+.character-track-progress {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cinema-cyan), var(--cinema-gold));
+  position: relative;
+  transition: width 0.1s linear;
+}
+.character-track-progress::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cinema-gold);
+  box-shadow: 0 0 10px var(--cinema-gold);
+}
+
+/* Text glow utilities */
+.glow-text-gold {
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(245, 158, 11, 0.2);
+}
+.glow-text-cyan {
+  text-shadow: 0 0 20px rgba(6, 182, 212, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
+}
+
+/* Scene Cards and Interactive Elements */
+.chapter-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* Anamorphic Lens Flare Line */
+.anamorphic-streak {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(6, 182, 212, 0.2) 20%, rgba(6, 182, 212, 0.8) 50%, rgba(6, 182, 212, 0.2) 80%, transparent 100%);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+}
+
+/* Card hover glow */
+.cine-card {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cine-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.8), 0 0 20px -5px rgba(6, 182, 212, 0.15);
+}
+
+/* Video Modal */
+.video-modal-backdrop {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.video-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
