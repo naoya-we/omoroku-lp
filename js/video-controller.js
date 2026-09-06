@@ -102,9 +102,19 @@ class VideoController {
     this.video.muted = true;
     this.video.playsInline = true;
 
+    // Responsive Mobile Optimization: Load 2.4MB video on mobile devices, 13MB HD on desktop
+    const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    const mobileSrc = 'assets/videos/veo_dream_dolly_mobile.mp4';
+    const desktopSrc = 'assets/videos/veo_dream_dolly.mp4';
+    const targetSrc = isMobile ? mobileSrc : desktopSrc;
+
+    if (!this.video.src || (!this.video.src.includes('mobile') && isMobile)) {
+      this.video.src = targetSrc;
+    }
+
     // Immediately sync if metadata is already loaded (e.g. from cache or local disk)
     const onMetadataReady = () => {
-      console.log('Veo Video ready. Duration:', this.video.duration);
+      console.log(`Veo Video ready (${isMobile ? 'MOBILE 2.4MB' : 'DESKTOP HD'}). Duration:`, this.video.duration);
       const scrollY = window.scrollY;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const progress = maxScroll > 0 ? Math.min(Math.max(scrollY / maxScroll, 0), 1) : 0;
