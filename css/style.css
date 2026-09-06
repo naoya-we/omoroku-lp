@@ -505,3 +505,16 @@ body {
   opacity: 1;
   pointer-events: auto;
 }
+
+/* Performance: Defer Rendering for Below-the-Fold Heavy Sections */
+#storyboard,
+#shooting,
+#postproduction,
+#premiere,
+#works,
+#pricing,
+#contact {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 600px;
+}
+
