@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const videoCtrl = new VideoController();
   const characterRunner = new CharacterRunner();
 
+  // Setup Cinematic Opening Fog & Scroll-driven Mist Dissolve
+  initCinematicFogReveal();
+
   // Setup GSAP Scroll-driven Section Animations
   initScrollAnimations();
 
@@ -34,6 +37,100 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup Live FPS meter for cinematic HUD
   initFpsMeter();
 });
+
+/**
+ * Cinematic Opening Fog & Scroll-driven Mist Dissolve
+ * 1. ページを開いたとき：立ち込める霧が優しく晴れ渡り、光が差し込んでタイトルが現れる
+ * 2. その霧の中を進むと（スクロール）：左右・手前の霧が大きく開いて霧散し、動画とページ全景が現れる
+ */
+function initCinematicFogReveal() {
+  if (typeof gsap === 'undefined') return;
+
+  const fogWrapper = document.getElementById('cinematic-fog-wrapper');
+  if (!fogWrapper) return;
+
+  // 1. Initial Opening Atmosphere (ページロード時の霧の揺らぎとタイトルの浮かび上がり)
+  const introTl = gsap.timeline({ delay: 0.1 });
+
+  introTl
+    .fromTo('.fog-layer-ambient',
+      { opacity: 0.95, filter: 'blur(35px)' },
+      { opacity: 0.72, filter: 'blur(22px)', duration: 2.2, ease: 'power2.out' }
+    )
+    .fromTo('.fog-light-shafts',
+      { opacity: 0, scale: 0.9 },
+      { opacity: 0.8, scale: 1, duration: 2.5, ease: 'power2.out' },
+      0.3
+    )
+    .fromTo('.fog-foreground-wisp',
+      { opacity: 0.95, filter: 'blur(20px)' },
+      { opacity: 0.65, filter: 'blur(32px)', duration: 2.0, ease: 'power2.out' },
+      0.2
+    )
+    .fromTo('.hero-title-line',
+      { opacity: 0, y: 45, filter: 'blur(16px)' },
+      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.6, stagger: 0.25, ease: 'power3.out' },
+      0.6
+    )
+    .fromTo('.hero-fade-in',
+      { opacity: 0, y: 25, filter: 'blur(8px)' },
+      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.2, stagger: 0.15, ease: 'power2.out' },
+      1.1
+    );
+
+  // 2. Scroll-driven "進むと霧が晴れる" Experience (スクロールに応じて霧が左右・前方へ晴れてページ全貌が現れる)
+  if (typeof ScrollTrigger !== 'undefined') {
+    const scrubTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#hero',
+        start: 'top top',
+        end: 'bottom 25%',
+        scrub: 0.6,
+        invalidateOnRefresh: true
+      }
+    });
+
+    scrubTl
+      // Left bank sweeps away to the left
+      .to('.fog-bank-left', {
+        xPercent: -85,
+        opacity: 0,
+        scale: 1.4,
+        ease: 'power1.inOut'
+      }, 0)
+      // Right bank sweeps away to the right
+      .to('.fog-bank-right', {
+        xPercent: 85,
+        opacity: 0,
+        scale: 1.4,
+        ease: 'power1.inOut'
+      }, 0)
+      // Foreground wisps push past camera lens and dissolve
+      .to('.fog-foreground-wisp', {
+        scale: 2.2,
+        opacity: 0,
+        filter: 'blur(50px)',
+        ease: 'power2.inOut'
+      }, 0)
+      // God rays dissipate into clear ambient daylight
+      .to('.fog-light-shafts', {
+        opacity: 0,
+        scaleY: 1.4,
+        ease: 'power1.inOut'
+      }, 0)
+      // Ambient overall haze vanishes completely
+      .to('.fog-layer-ambient', {
+        opacity: 0,
+        ease: 'power1.inOut'
+      }, 0)
+      // The "霧の向こうへ進む" scroll guide fades smoothly
+      .to('.fog-enter-prompt', {
+        opacity: 0,
+        y: -30,
+        ease: 'power2.out'
+      }, 0);
+  }
+}
 
 /**
  * GSAP Scroll Animations
@@ -66,17 +163,6 @@ function initScrollAnimations() {
       );
     }
   });
-
-  // Hero Title reveal on page load
-  gsap.fromTo('.hero-title-line',
-    { opacity: 0, y: 60, skewY: 4 },
-    { opacity: 1, y: 0, skewY: 0, duration: 1.4, stagger: 0.2, ease: 'power4.out', delay: 0.2 }
-  );
-
-  gsap.fromTo('.hero-fade-in',
-    { opacity: 0, y: 20 },
-    { opacity: 1, y: 0, duration: 1.0, stagger: 0.15, ease: 'power2.out', delay: 0.6 }
-  );
 }
 
 /**

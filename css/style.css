@@ -505,3 +505,114 @@ body {
   opacity: 1;
   pointer-events: auto;
 }
+
+/* ==========================================================================
+   CINEMATIC VOLUMETRIC FOG & MIST SYSTEM
+   ========================================================================== */
+.cinematic-fog-wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 15;
+  pointer-events: none;
+  overflow: hidden;
+  transition: opacity 0.5s ease-out;
+}
+
+.fog-layer {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+}
+
+/* Deep Ambient Diffusion Haze */
+.fog-layer-ambient {
+  inset: -15%;
+  width: 130%;
+  height: 130%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(220, 240, 255, 0.35) 0%, rgba(135, 195, 240, 0.22) 35%, rgba(10, 16, 28, 0.78) 70%, rgba(7, 7, 10, 0.96) 100%);
+  filter: blur(25px);
+  opacity: 0.9;
+}
+
+/* Volumetric God Rays (Piercing Morning Sunlight) */
+.fog-light-shafts {
+  top: -40%;
+  left: -10%;
+  width: 120%;
+  height: 180%;
+  background: linear-gradient(125deg, 
+    transparent 15%, 
+    rgba(255, 255, 255, 0.15) 28%, 
+    transparent 36%, 
+    rgba(6, 182, 212, 0.16) 48%, 
+    transparent 56%, 
+    rgba(245, 158, 11, 0.1) 65%, 
+    transparent 78%
+  );
+  filter: blur(24px);
+  mix-blend-mode: screen;
+  transform-origin: top center;
+  animation: shaftBreathe 14s ease-in-out infinite alternate;
+  opacity: 0.8;
+}
+
+/* Left Rolling Fog Bank */
+.fog-bank-left {
+  top: -20%;
+  left: -30%;
+  width: 110vw;
+  height: 140vh;
+  background: 
+    radial-gradient(ellipse at 40% 45%, rgba(245, 252, 255, 0.6) 0%, rgba(180, 225, 250, 0.32) 40%, transparent 70%),
+    radial-gradient(circle at 60% 70%, rgba(210, 235, 255, 0.4) 0%, transparent 60%);
+  filter: blur(42px);
+  animation: driftMistLeft 20s ease-in-out infinite alternate;
+}
+
+/* Right Rolling Fog Bank */
+.fog-bank-right {
+  top: -20%;
+  right: -30%;
+  width: 110vw;
+  height: 140vh;
+  background: 
+    radial-gradient(ellipse at 60% 50%, rgba(245, 252, 255, 0.55) 0%, rgba(175, 220, 250, 0.3) 40%, transparent 70%),
+    radial-gradient(circle at 40% 65%, rgba(200, 230, 255, 0.35) 0%, transparent 60%);
+  filter: blur(42px);
+  animation: driftMistRight 24s ease-in-out infinite alternate;
+}
+
+/* Foreground Low Wisps */
+.fog-foreground-wisp {
+  top: -10%;
+  left: -10%;
+  width: 120vw;
+  height: 120vh;
+  background: 
+    radial-gradient(ellipse at 50% 65%, rgba(255, 255, 255, 0.45) 0%, rgba(195, 235, 255, 0.22) 30%, transparent 60%),
+    radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 75% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
+  filter: blur(32px);
+  opacity: 0.85;
+}
+
+/* Floating Mist Breathing Keyframes */
+@keyframes driftMistLeft {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(4vw, -2vh, 0) scale(1.05); }
+  100% { transform: translate3d(-3vw, 3vh, 0) scale(0.98); }
+}
+
+@keyframes driftMistRight {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-5vw, 2vh, 0) scale(1.06); }
+  100% { transform: translate3d(3vw, -2vh, 0) scale(0.97); }
+}
+
+@keyframes shaftBreathe {
+  0% { opacity: 0.6; transform: rotate(-2deg) scale(0.98); }
+  100% { opacity: 0.9; transform: rotate(2deg) scale(1.04); }
+}
+

@@ -71,6 +71,26 @@
     <div class="video-overlay-gradient"></div>
   </div>
 
+  <!-- ========================================================================
+       CINEMATIC VOLUMETRIC FOG & MIST SYSTEM
+       ======================================================================== -->
+  <div id="cinematic-fog-wrapper" class="cinematic-fog-wrapper pointer-events-none" aria-hidden="true">
+    <!-- Deep Ambient Blue-Gray Mist (Thins on load, clears on scroll) -->
+    <div class="fog-layer fog-layer-ambient"></div>
+
+    <!-- Volumetric Morning Sun Rays Piercing Through Haze -->
+    <div class="fog-layer fog-light-shafts"></div>
+
+    <!-- Left Rolling Mist Bank (Parts to the left on scroll) -->
+    <div class="fog-layer fog-bank-left"></div>
+
+    <!-- Right Rolling Mist Bank (Parts to the right on scroll) -->
+    <div class="fog-layer fog-bank-right"></div>
+
+    <!-- Central Low Wisps (Part forward & disperse on scroll) -->
+    <div class="fog-layer fog-foreground-wisp"></div>
+  </div>
+
   <!-- Right Side Film Strip Scene Navigator -->
   <nav class="film-strip-nav hide-in-cinema-mode" aria-label="Scene Navigator">
     <a href="#hero" class="film-strip-dot active" title="Prologue">
@@ -245,11 +265,14 @@
           </a>
         </div>
 
-        <!-- Scroll Directive Affordance -->
-        <div class="hero-fade-in mt-16 flex flex-col items-center gap-2 opacity-70 hover:opacity-100 transition">
-          <span class="font-mono text-[11px] tracking-widest text-cyan-300 uppercase">Scroll to Direct the Film</span>
+        <!-- Scroll Directive Affordance — Fog Enter Guide -->
+        <div class="fog-enter-prompt hero-fade-in mt-14 flex flex-col items-center gap-3">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 text-xs font-mono backdrop-blur-md shadow-lg shadow-cyan-950/60 animate-pulse">
+            <i data-lucide="compass" class="w-3.5 h-3.5 text-cyan-300"></i>
+            <span>霧の向こうへ進む (SCROLL TO ENTER)</span>
+          </div>
           <div class="w-5 h-8 rounded-full border border-cyan-400/50 flex items-start justify-center p-1">
-            <div class="w-1 h-2 rounded-full bg-cyan-400 animate-bounce"></div>
+            <div class="w-1.5 h-2.5 rounded-full bg-cyan-400 animate-bounce"></div>
           </div>
         </div>
 
