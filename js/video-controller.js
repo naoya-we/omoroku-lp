@@ -33,6 +33,9 @@ class VideoController {
     this.scrollDirection = 'forward'; // 'forward' | 'reverse'
     this.lastScrollY = window.scrollY;
 
+    // Mobile device detection for performance decimation
+    this.isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
     // Chapter visuals with Veo Dream Dolly frames
     this.chapters = [
       { id: 'hero', imageSrc: 'assets/images/veo_dream_world.jpg', label: 'APARTMENT PROLOGUE', timeStart: 0 },
@@ -83,8 +86,9 @@ class VideoController {
     resize();
     window.addEventListener('resize', resize);
 
-    // Generate floating cinematic dust motes
-    for (let i = 0; i < 45; i++) {
+    // Generate floating cinematic dust motes (Decimated to 10 on mobile for GPU optimization)
+    const particleCount = this.isMobile ? 10 : 45;
+    for (let i = 0; i < particleCount; i++) {
       this.particles.push({
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
@@ -102,19 +106,19 @@ class VideoController {
     this.video.muted = true;
     this.video.playsInline = true;
 
-    // Responsive Mobile Optimization: Load 2.4MB video on mobile devices, 13MB HD on desktop
-    const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    const mobileSrc = 'assets/videos/veo_dream_dolly_mobile.mp4';
+    // Responsive Mobile Optimization: Load All-Intra 3.5MB video on mobile devices, 13MB HD on desktop
+    const isMobile = this.isMobile;
+    const mobileSrc = 'assets/videos/veo_dream_dolly_mobile_intra.mp4';
     const desktopSrc = 'assets/videos/veo_dream_dolly.mp4';
     const targetSrc = isMobile ? mobileSrc : desktopSrc;
 
-    if (!this.video.src || (!this.video.src.includes('mobile') && isMobile)) {
+    if (!this.video.src || (!this.video.src.includes('intra') && isMobile)) {
       this.video.src = targetSrc;
     }
 
     // Immediately sync if metadata is already loaded (e.g. from cache or local disk)
     const onMetadataReady = () => {
-      console.log(`Veo Video ready (${isMobile ? 'MOBILE 2.4MB' : 'DESKTOP HD'}). Duration:`, this.video.duration);
+      console.log(`Veo Video ready (${isMobile ? 'MOBILE ALL-INTRA' : 'DESKTOP HD'}). Duration:`, this.video.duration);
       const scrollY = window.scrollY;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const progress = maxScroll > 0 ? Math.min(Math.max(scrollY / maxScroll, 0), 1) : 0;
@@ -164,8 +168,14 @@ class VideoController {
         const duration = this.video.duration;
         const targetTime = Math.max(0, Math.min(this.targetProgress * duration, duration - 0.02));
 
-        if (this.scrollDirection === 'reverse') {
-          // When scrolling UP: ensure video rewinds smoothly towards targetTime
+        if (this.isMobile) {
+          // On mobile with All-Intra: pure instant scrub in both directions with zero GOP decode lag
+          if (!this.video.seeking && Math.abs(this.video.currentTime - targetTime) > 0.03) {
+            this.video.currentTime = targetTime;
+            this.updateTimecode(targetTime);
+          }
+        } else if (this.scrollDirection === 'reverse') {
+          // When scrolling UP on desktop: ensure video rewinds smoothly towards targetTime
           if (!this.video.seeking && (this.video.currentTime - targetTime > 0.04)) {
             this.video.currentTime = targetTime;
             this.updateTimecode(targetTime);
@@ -241,6 +251,21 @@ class VideoController {
     if (this.mode === 'hybrid' && this.video && this.video.duration) {
       const duration = this.video.duration;
       const targetTime = Math.max(0, Math.min(progress * duration, duration - 0.02));
+
+      if (this.isMobile) {
+        // === MOBILE ALL-INTRA: PURE ULTRA-RESPONSIVE SCRUBBING ===
+        // Avoid play()/pause() decoder flip-flop which stutters on mobile
+        this.updateHUDStatus(true);
+        if (!this.video.seeking && Math.abs(this.video.currentTime - targetTime) > 0.03) {
+          this.video.currentTime = targetTime;
+          this.updateTimecode(targetTime);
+        }
+        clearTimeout(this.scrollTimeout);
+        this.scrollTimeout = setTimeout(() => {
+          this.updateHUDStatus(false);
+        }, 180);
+        return;
+      }
 
       if (this.scrollDirection === 'forward') {
         // === DOWN SCROLL: PLAY FORWARD SMOOTHLY ===
@@ -519,8 +544,18 @@ class VideoController {
   startCanvasLoop() {
     if (!this.canvas || !this.ctx) return;
 
-    const render = () => {
-      this.renderCanvasFrame();
+    let lastTime = 0;
+    const interval = this.isMobile ? 1000 / 30 : 0; // Throttled to 30fps on mobile to preserve CPU & battery
+
+    const render = (currentTime) => {
+      if (this.isMobile && interval > 0) {
+        if (currentTime - lastTime >= interval) {
+          this.renderCanvasFrame();
+          lastTime = currentTime;
+        }
+      } else {
+        this.renderCanvasFrame();
+      }
       requestAnimationFrame(render);
     };
     requestAnimationFrame(render);
@@ -549,8 +584,8 @@ class VideoController {
       ctx.fill();
     }
 
-    // Anamorphic horizontal light streak across top third when playing
-    if (this.isPlaying) {
+    // Anamorphic horizontal light streak (desktop only: skipped on mobile to eliminate full-screen fill-rate overhead)
+    if (!this.isMobile && this.isPlaying) {
       this.lightFlareX += 8;
       if (this.lightFlareX > width * 1.5) this.lightFlareX = -width * 0.5;
 
